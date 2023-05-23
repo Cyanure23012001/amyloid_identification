@@ -81,11 +81,13 @@ for x in tqdm(CPAD_list):
     df4_list.append(new_row)
 """
 
+# On enlève les valeurs où il y a des None
 df4_list = [i for i in df4_list if i is not None]
 
 
 df4 = pd.DataFrame.from_dict(df4_list)
  
+# On deplace à droite les colonnes prenant beaucoup de place
 df4 = df4[[col for col in df4 if not (col.startswith('DF') or col.startswith('AA'))]+[col for col in df4 if (col.startswith('DF') or col.startswith('AA'))]]
 
 
