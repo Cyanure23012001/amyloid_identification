@@ -33,7 +33,7 @@ def alignement(result_dssp):
 
     resultats_alignements_np = np.array(alignements_results)
 
-
+    
     total = (np.sum(countnp)/np.sum(longueurnp))*100
 
 # On enlève les valeurs qui ne sont pas numériques ?
