@@ -49,7 +49,7 @@ df4_list = []
 
 df4 = pd.DataFrame()
 # Chargement des fichiers de données
-with open('CPAD.pickle', 'rb') as f:
+with open('pickle_models/CPAD.pickle', 'rb') as f:
     CPAD_list = pickle.load(f)
 
 print(CPAD_list)
