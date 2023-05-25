@@ -16,11 +16,11 @@ import download_assembly
 
 def PDB(pdb_path):
     #print(pdb_path)
-    #try:
+    #on récupere les données sur la pdb
     api_information = api_informations.get_info(pdb_path[-8:-4])
     #print(api_information)
 
-    #if "NMR" in api_information['experimental_method']:
+    #Si cristallo: on reconstruit, sinon on recupère l'assembly
     if api_information['experimental_method'] == "X-RAY DIFFRACTION":
         coords = Coor(pdb_path)
         test = coords.select_atoms("protein and not altloc B C D E")
@@ -39,22 +39,11 @@ def PDB(pdb_path):
         coords = Coor(pdb_path)
         test = coords.select_atoms("protein and not altloc B C D E")
 
+        # Generation de la sequence d'AA
         sequenceAA = test.get_aa_seq()
         temp = {val: key for key, val in sequenceAA.items()}
         res = {val:key for key, val in temp.items()}    
         AAseq = ''.join(list(res.values())).replace('-','')
-
-
-
-
-
-    #except:
-     #   return None
-
-
-
-  
-
 
     
     # Pour diminuer les temps de calculs/ remplacé par un timeout maintenant
@@ -68,10 +57,6 @@ def PDB(pdb_path):
     print(pdb_path[-8:-4])
     api_information = api_informations.get_info(pdb_path[-8:-4])
     #print(api_information)
-
-
-
-
 
 
     #print(f"CHAINS = {str(test.chain)}")
@@ -98,12 +83,6 @@ def PDB(pdb_path):
     # Get number of cells in df dataframe
     number_max_of_hbonds = df.size
 
-    # Infilling code
-    # ...
-    
-    #print(df)
-    #print(len(test.resid))
-    #print(len(test.chain))
 
 
 
@@ -151,7 +130,7 @@ def PDB(pdb_path):
     total = {}
     numberofh = 0
     
-    
+    # On récupère toutes les liaisons différentes trouvées
     for combinations in unique_combinations:
         total[f"{combinations[0]}_{combinations[1]}"] = int(df2[combinations[0]][combinations[1]])+int(df2[combinations[1]][combinations[0]])
         numberofh = numberofh + int(df2[combinations[0]][combinations[1]])+int(df2[combinations[1]][combinations[0]])
