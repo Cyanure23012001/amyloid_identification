@@ -1,0 +1,10 @@
+Bio==1.5.9
+dtale==2.14.1
+freesasa==2.2.0.post3
+numpy==1.23.0
+pandas==1.4.3
+Pebble==5.0.3
+Pillow==9.5.0
+requests==2.27.1
+scipy==1.9.1
+tqdm==4.63.0
