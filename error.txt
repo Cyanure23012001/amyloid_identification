@@ -367,3 +367,5 @@
 1UZF index 2296 is out of bounds for axis 0 with size 2296
 2YDM index 2296 is out of bounds for axis 0 with size 2296
 5BPN index 1484 is out of bounds for axis 0 with size 1484
+5AEF 
+6S6N Unable to allocate 25.6 GiB for an array with shape (58578, 58578) and data type float64
