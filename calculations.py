@@ -20,10 +20,10 @@ def PDB(pdb_path):
     api_information = api_informations.get_info(pdb_path[-8:-4])
     #print(api_information)
 
-
+    #if "NMR" in api_information['experimental_method']:
     if api_information['experimental_method'] == "X-RAY DIFFRACTION":
         coords = Coor(pdb_path)
-        test = coords.select_atoms("protein")
+        test = coords.select_atoms("protein and not altloc B C D E")
 
         sequenceAA = test.get_aa_seq()
         temp = {val: key for key, val in sequenceAA.items()}
@@ -34,10 +34,10 @@ def PDB(pdb_path):
         path_struct_complete = f'modified_structures/{pdb_path[-8:-4]}.pdb'
         test.write(path_struct_complete)
     
-    if "NMR" in api_information['experimental_method']:
+    else:
         pdb_path = download_assembly.download_pdb(pdb_path[-8:-4])
         coords = Coor(pdb_path)
-        test = coords.select_atoms("protein")
+        test = coords.select_atoms("protein and not altloc B C D E")
 
         sequenceAA = test.get_aa_seq()
         temp = {val: key for key, val in sequenceAA.items()}
@@ -82,7 +82,9 @@ def PDB(pdb_path):
     #try:
     try:
         HBOND = DSSP.compute_Hbond_matrix(test).view()
-    except:
+    except Exception as e:
+        with open("error.txt", "a") as f:
+            f.write(f"{pdb_path[-8:-4]} {str(e)}\n")
         return None
 
     
@@ -216,7 +218,9 @@ def PDB(pdb_path):
         #alignement_total = 0
     try:
         total_hydrophobicity,total_hydropathy = hydro_calc.hydro_calculations(result)
-    except:
+    except Exception as e:
+        with open("error.txt", "a") as f:
+            f.write(f"{pdb_path[-8:-4]} {str(e)}\n")
         return None
 
     descriptors = {'PDB_ID':pdb_path[-8:-4], 'nb H_bond / nres':numbertotalh,'nb H_bond total':numberofh, 'H_bond / nb_res * nb_chains':numberHchains, 'Max_hbonds_number':number_max_of_hbonds, 'Number of chains':len(names), 'SASA_unedited':result.totalArea(), 'SASA_full':result_total, 'SASA_theo':result.totalArea()*len(names), 'Alignement_total':total, 'Alignement_moyen': alignement_total, 'Hydrophobicity':total_hydrophobicity, 'Hydropathy':total_hydropathy,'AAseq':AAseq, 'AAseq_full':AAseq_full, 'DF_DSSP':df3,'DF_H':df2}
