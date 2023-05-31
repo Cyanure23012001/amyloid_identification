@@ -11,6 +11,7 @@ import copy
 from pebble import ProcessPool, ProcessExpired
 from concurrent.futures import TimeoutError
 
+
 # Custom modules
 import calculations # Calcul de pleins d'informations
 import download # Télécharge les structures

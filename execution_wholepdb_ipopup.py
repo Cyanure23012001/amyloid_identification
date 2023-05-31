@@ -20,12 +20,25 @@ import download # Télécharge les structures
 
 # Fonction executant le téléchargement et le calcul des descripteurs
 
+
+def gunzip_shutil(source_filepath, dest_filepath, block_size=65536):
+    with gzip.open(source_filepath, 'rb') as s_file, \
+            open(dest_filepath, 'wb') as d_file:
+        shutil.copyfileobj(s_file, d_file, block_size)
+
 def process_struct(struct, is_amyloid):
 	#try:
     try:
-        local_filename = download.download_pdb(struct)
+        pdb_path = f"pdb_db/pdb{struct.lower()}.ent.gz"
+        gunzip_shutil(pdb_path, f"download_pdb/{struct}.pdb")
+        local_filename = f"download_pdb/{struct}.pdb"
+        print(local_filename)
+
+        #local_filename = download.download_pdb(struct)
         new_row = calculations.PDB(local_filename)
-    except:
+    except Exception as e:
+        with open("error.txt", "a") as f:
+            f.write(f"{pdb_path[-8:-4]} {str(e)}\n")
         new_row = None
         
     if new_row != None:

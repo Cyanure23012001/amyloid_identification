@@ -1,5 +1,8 @@
 import os
 import requests
+import gzip
+import shutil
+
 def download_pdb(pdb_id):
     # Define the URL to download the PDB assembly file
     local_filename = f"download_folder_assembly/{pdb_id}.pdb.gz"
@@ -13,8 +16,6 @@ def download_pdb(pdb_id):
         with open(local_filename, "wb") as f:
             f.write(response.content)
         
-        import gzip
-        import shutil
 
         def gunzip_shutil(source_filepath, dest_filepath, block_size=65536):
             with gzip.open(source_filepath, 'rb') as s_file, \
