@@ -1,0 +1,1 @@
+run --account=alphafold -p rpbs -o BON.out -e MAUVAIS.err -c 110 singularity exec --bind .:/amyloid_identification --bind /shared/banks/pdb/data/structures/:/pdb_db python-docker_2.sif bash -c "cd /amyloid_identification && conda run -n python-app python execution_wholepdb_ipopup.py > save_output.log"
