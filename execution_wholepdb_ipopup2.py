@@ -12,6 +12,7 @@ import re
 import time
 import gzip
 import shutil
+import sys
 from pebble import ProcessPool, ProcessExpired
 from concurrent.futures import TimeoutError
 
@@ -19,6 +20,7 @@ from concurrent.futures import TimeoutError
 import calculations # Calcul de pleins d'informations
 import download # Télécharge les structures
 
+os.chdir('/amyloid_identification/')
 # Fonction executant le téléchargement et le calcul des descripteurs
 
 
@@ -42,7 +44,8 @@ def process_struct(struct, is_amyloid):
         third_pdb = os.path.abspath(second_pdb)
         pdb_path = f"/pdb_db{third_pdb}"
         #print(third_pdb)
-        #print(pdb_path)
+        sys.stderr.write(str(pdb_path))
+        sys.stdout.write(str(pdb_path))
         if os.path.exists(pdb_path):
             print("EXISTE")
             with open("logging/file_exist.txt", "a") as f:
@@ -55,6 +58,14 @@ def process_struct(struct, is_amyloid):
         #local_filename = download.download_pdb(struct)
         new_row = calculations.PDB(local_filename)
     except Exception as e:
+
+        if os.path.exists(f"download_folder/{struct}.pdb"):
+            os.remove(f"download_folder/{struct}.pdb")
+        if os.path.exists(f"download_folder_assembly/{struct}.pdb"):
+            os.remove(f"download_folder_assembly/{struct}.pdb.gz")
+            os.remove(f"download_folder_assembly/{struct}.pdb")
+        if os.path.exists(f"modified_structures/{struct}.pdb"):
+            os.remove(f"modified_structures/{struct}.pdb")
         with open("logging/error.txt", "a") as f:
             f.write(f"{pdb_path} | {pdb_path[-8:-4]} {str(e)}\n")
         new_row = None
@@ -63,36 +74,38 @@ def process_struct(struct, is_amyloid):
         amyloid = {'is_amyloid': is_amyloid}
         new_row2 = {**new_row,**amyloid}
 
-    
-        # delete local_filename, test if pdb exist in download_folder_assembly, in modified structures and also deleted them
-        try:
-            if os.path.exists(local_filename):
-                os.remove(local_filename)
-            if os.path.exists(f"download_folder_assembly/{struct}.pdb"):
-                os.remove(f"download_folder_assembly/{struct}.pdb.gz")
-                os.remove(f"download_folder_assembly/{struct}.pdb")
-            if os.path.exists(f"modified_structures/{struct}.pdb"):
-                os.remove(f"modified_structures/{struct}.pdb")
-        except:
-            pass
+        with open("logging/SUCCESS.txt", "a") as f:
+            f.write(f"SUCCESS {struct}\n")
 
+        # delete local_filename, test if pdb exist in download_folder_assembly, in modified structures and also deleted them
+        
+        if os.path.exists(f"download_folder/{struct}.pdb"):
+            os.remove(local_filename)
+        if os.path.exists(f"download_folder_assembly/{struct}.pdb"):
+            os.remove(f"download_folder_assembly/{struct}.pdb.gz")
+            os.remove(f"download_folder_assembly/{struct}.pdb")
+        if os.path.exists(f"modified_structures/{struct}.pdb"):
+            os.remove(f"modified_structures/{struct}.pdb")
+        
         
         #print(new_row2)
         #print(f"{local_filename} succeed")
         return new_row2
 
     else:
-        try:
-            if os.path.exists(local_filename):
-                os.remove(local_filename)
-            if os.path.exists(f"download_folder_assembly/{struct}.pdb"):
-                os.remove(f"download_folder_assembly/{struct}.pdb.gz")
-                os.remove(f"download_folder_assembly/{struct}.pdb")
-            if os.path.exists(f"modified_structures/{struct}.pdb"):
-                os.remove(f"modified_structures/{struct}.pdb")
-        except:
-            pass
+        with open("logging/ERROR.txt", "a") as f:
+            f.write(f"ERROR {struct}\n")
 
+        
+        if os.path.exists(f"download_folder/{struct}.pdb"):
+            os.remove(f"download_folder/{struct}.pdb")
+        if os.path.exists(f"download_folder_assembly/{struct}.pdb"):
+            os.remove(f"download_folder_assembly/{struct}.pdb.gz")
+            os.remove(f"download_folder_assembly/{struct}.pdb")
+        if os.path.exists(f"modified_structures/{struct}.pdb"):
+            os.remove(f"modified_structures/{struct}.pdb")
+        
+        
         print(f"{local_filename} failed")
         return None
 
@@ -133,36 +146,56 @@ with open("logging/nb_file.log", "a") as f:
 
 with ProcessPool(max_workers=os.cpu_count()) as pool:
     futures = [pool.schedule(process_struct, args=(struct, True), timeout=60) for struct in res]
-    with tqdm(total=len(futures)) as pbar:
-        for i, future in enumerate(futures):
-            new_row2 = None
-            try:
-                new_row2 = future.result()
-            except TimeoutError:
-                print(f"Killed worker due to timeout: {future}")
-            except ProcessExpired as error:
-                print(f"Process expired: {error}")
+    for i, future in enumerate(futures):
+        
+        new_row2 = None
+        print(i,file=sys.stdout)
+        """
+        with open("logging/processing.txt", "a") as f:
+            f.write(f"processing : {res[i]} future = {future} futures = {futures}\n")       
+        """     
+        try:
+            new_row2 = future.result()
             if new_row2 is not None:
                 df4_list.append(new_row2)
-            
-            # Systeme de backup des résultats
-            if i % 100 == 0:
+            count_res = len(df4_list)
+            with open("logging/log_i.txt", "a") as f:
+                f.write(f"{count_res}\n")
+             # Systeme de backup des résultats
+            if count_res % 10000 == 0:
                 try:
                     print("SAVING_results")
-                    results_list = [i for i in df4_list if i is not None]
+                    results_list = [j for j in df4_list if j is not None]
                     df4 = pd.DataFrame.from_dict(df4_list)
-
-                    # on y sauvegarde les résultats obtenus précédemment
+                     # on y sauvegarde les résultats obtenus précédemment
                     results = pd.concat([temp_df, df4], ignore_index=True)
-                
-                    #results = results[[col for col in results if not (col.startswith('DF') or col.startswith('AA'))]+[col for col in results if (col.startswith('DF') or col.startswith('AA'))]]
-                    with open(f'pickle_models/calculations_results_temp_{i}.pickle','wb') as f:
+        
+                #results = results[[col for col in results if not (col.startswith('DF') or col.startswith('AA'))]+[col for col in results if (col.startswith('DF') or col.startswith('AA'))]]
+                    with open(f'pickle_models/calculations_results_temp_{count_res}.pickle','wb') as f:
                         pickle.dump(results,f)
+                        
+                        
                 except Exception as e:
                     with open("logging/error_2.txt", "a") as f:
-                        f.write(f"{i} | {str(e)}\n")
+                        f.write(f"{count_res} | {str(e)}\n")
 
-            pbar.update(1)
+
+        except TimeoutError:
+            print(f"Killed worker due to timeout: {future}")
+            if os.path.exists(f"download_folder/{struct}.pdb"):
+                os.remove(f"download_folder/{struct}.pdb")
+            if os.path.exists(f"download_folder_assembly/{struct}.pdb"):
+                os.remove(f"download_folder_assembly/{struct}.pdb.gz")
+                os.remove(f"download_folder_assembly/{struct}.pdb")
+            if os.path.exists(f"modified_structures/{struct}.pdb"):
+                os.remove(f"modified_structures/{struct}.pdb")
+        except ProcessExpired as error:
+            print(f"Process expired: {error}")
+        except Exception as e:
+            with open("logging/error_3.txt", "a") as f:
+                f.write(f"{str(e)}\n")
+         
+
 
 
  
